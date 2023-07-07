@@ -1,1 +1,23 @@
-暗收
+要求：
+实现以下 user story: 为某在线视频剪辑产品编写⼀个(或⼀组)接⼝，⽤户提交⼀个视频的 URL 和想要剪辑的起始、终⽌时间戳；
+后端调⽤ ffmpeg 对视频进⾏剪辑；剪辑完成后，⽤户可以获取下载剪辑后视频的 URL。 
+
+zzd.go为服务端主程序。在73行需更改mysql连接语句，用于将用户提交记录保存在数据库中。
+运行zzd.go主程序
+1.运行后可以使用go test运行man_test.go测试文件进行测试，
+2.也可以通过postman以post方式进行测试，json格式如下，（1.url剪辑视频地址 2.StartTime起始剪辑时间 3.EndTime结束剪辑时间 4.用户id（用于鉴别用户身份））
+
+{
+    "url":"https://stream7.iqilu.com/10339/article/202002/17/4417a27b1a656f4779eaa005ecd1a1a0.mp4",
+    "start_time":0,
+    "end_time":15,
+    "user_id":"4563"
+}
+
+请求成功后可返回json数据，如下，1.code状态码 2.UserID用户id 3.剪辑完成后视频下载地址 4.Msg消息
+{
+    "code": 200,
+    "user_id": "zop",
+    "url": "127.0.0.1/download/newzop.mp4",
+    "msg": "成功"
+}
