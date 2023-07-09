@@ -15,9 +15,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"os/exec"
 	"strconv"
-	"bufio"
-	"regexp"
-	"fmt"
 	"os"
 )
 
@@ -39,6 +36,12 @@ type ClipReposonse struct {
 	Msg			string `json:"msg"`
 	
 }
+//剪辑查询数据，1.UserID为用户id 2.Schedule为该用户的上传视频下载了多少字节的值
+type ProgressQuery struct {
+	UserID     string `json:"user_id"`
+	Schedule   int64 `json:"schedule"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -48,7 +51,12 @@ func main() {
 	initDB()
 	// 初始化Gin
 	r := gin.Default()
+
+	//剪辑接口
 	r.POST("/clip", clipHandler)
+
+	//查询进度接口，如http://127.0.0.1/query/zzds即可查询用户zzds所上传视频的进度
+	r.GET("/query/:UserID", getClipProgress)
 
 	//设置静态路径
 	r.StaticFS("/video", http.Dir("video"))
@@ -172,26 +180,30 @@ func clipVideo(inputFile string, outputFile string, startTime int, duration int)
 		log.Fatal(err)
 	}
 
-	scanner := bufio.NewScanner(os.Stderr)
+	return nil
+}
 
-	progressRegex := regexp.MustCompile(`time=(\d{2}:\d{2}:\d{2}\.\d{2})`)
+//查询进度接口
+func getClipProgress(c *gin.Context){
 
-	for scanner.Scan() {
-		line := scanner.Text()
+	//获取用户ID
+	ID := c.Param("UserID")
 
-		matches := progressRegex.FindStringSubmatch(line)
-		if len(matches) > 1 {
-			
-			
-			progressTime := matches[1]
-			
-			fmt.Println("当前剪辑进度：", progressTime)
-		}
-	}
+	//根据ID生成对应路劲
+	outputFile := "./video/new"+ID+".mp4"
 
-	err = cmd.Wait()
+	//使用os.Stat去获取已下载的文件字节大小
+	fi, _ := os.Stat(outputFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return nil
+	totalSize := fi.Size()
+
+	//返回数据格式如下{"user_id":"zzds","schedule":6143952}，user_id为用户ID，Schedule为该用户的上传视频下载了多少字节的值
+	var progressquery ProgressQuery
+	progressquery.UserID=ID
+	progressquery.Schedule=totalSize
+
+	c.JSON(http.StatusOK, progressquery)
+
 }
