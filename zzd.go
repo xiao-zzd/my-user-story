@@ -193,7 +193,7 @@ func getClipProgress(c *gin.Context){
 	outputFile := "./video/new"+ID+".mp4"
 
 	//使用os.Stat去获取已下载的文件字节大小
-	fi, _ := os.Stat(outputFile)
+	fi, err := os.Stat(outputFile)
 	if err != nil {
 		log.Fatal(err)
 	}
