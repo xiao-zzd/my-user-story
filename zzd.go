@@ -1,12 +1,5 @@
 package main
-//使用postman进行测试，接口测试地址为http://127.0.0.1/clip/，方式为POST，如下为请求JSON测试模板
-//{
-//     "url":"https://stream7.iqilu.com/10339/article/202002/17/4417a27b1a656f4779eaa005ecd1a1a0.mp4",
-//     "start_time":0,
-//     "end_time":15,
-//     "user_id":"4563"
-    
-// }
+
 import (
 	"database/sql"
 	"net/http"
@@ -47,12 +40,19 @@ var db *sql.DB
 func main() {
 
 	// 初始化数据库
-	
 	initDB()
+	
 	// 初始化Gin
 	r := gin.Default()
 
 	//剪辑接口
+	//使用postman进行测试，接口测试地址为http://127.0.0.1/clip/，方式为POST，如下为请求JSON测试模板
+	//{
+	//     "url":"https://stream7.iqilu.com/10339/article/202002/17/4417a27b1a656f4779eaa005ecd1a1a0.mp4",
+	//     "start_time":0,
+	//     "end_time":15,
+	//     "user_id":"4563"
+	// }
 	r.POST("/clip", clipHandler)
 
 	//查询进度接口，如http://127.0.0.1/query/zzds即可查询用户zzds所上传视频的进度
