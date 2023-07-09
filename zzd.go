@@ -29,10 +29,11 @@ type ClipReposonse struct {
 	Msg			string `json:"msg"`
 	
 }
-//剪辑查询数据，1.UserID为用户id 2.Schedule为该用户的上传视频下载了多少字节的值
+//剪辑查询数据，1.UserID为用户id 2.Schedule为该用户的上传视频下载了多少字节的值 3.Success为是否完成下载，1为成功下载，0为还未下载完成
 type ProgressQuery struct {
 	UserID     string `json:"user_id"`
 	Schedule   int64 `json:"schedule"`
+	Success    int `json:"success"`
 }
 
 var db *sql.DB
@@ -199,11 +200,38 @@ func getClipProgress(c *gin.Context){
 	}
 	totalSize := fi.Size()
 
-	//返回数据格式如下{"user_id":"zzds","schedule":6143952}，user_id为用户ID，Schedule为该用户的上传视频下载了多少字节的值
+	//返回数据格式如下{"user_id":"zzds","schedule":6143952}，
+	//user_id为用户ID，Schedule为该用户的上传视频下载了多少字节的值,Success为是否完成下载，1为成功下载，0为还未下载完成
 	var progressquery ProgressQuery
 	progressquery.UserID=ID
 	progressquery.Schedule=totalSize
 
+	isCorrupted, err := isVideoFileCorrupted(outputFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isCorrupted {
+		//打开失败，代表剪辑未完成或剪辑失败
+		progressquery.Success=0
+	
+	} else {
+		//打开成功，代表剪辑完毕，在这里可以写“接⼝⽀持主动推送剪辑完成事件给⽤户”
+		progressquery.Success=1
+	
+	}
 	c.JSON(http.StatusOK, progressquery)
 
+
+}
+
+
+//视频打开函数，用于判断视频是否损坏，以此可以得知文件是否剪辑成功。
+func isVideoFileCorrupted(filepath string) (bool, error) {
+	cmd := exec.Command("ffmpeg", "-v", "error", "-i", filepath, "-f", "null", "-")
+	err := cmd.Run()
+	if err != nil {
+		// 若命令执行失败，则视频文件可能损坏
+		return true, nil
+	}
+	return false, nil
 }
